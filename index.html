@@ -700,20 +700,52 @@ function tileRow(tile,by,f,camX){
  let x=-(((floor(camX*f))%w)+w)%w;
  for(;x<VW;x+=w)g.drawImage(tile,x,by-h);
 }
+function jungleTile(){
+ if(SC.jungle)return SC.jungle;
+ const w=512,h=150,c=mkc(w,h),x=c.getContext('2d'),R=seeded(77);
+ x.fillStyle='#1b5a30';x.fillRect(0,70,w,h-70);
+ for(let i=0;i<w;i+=10){
+  const r=12+((R()*10)|0),cy=62+((R()*16)|0)+Math.round(sin(i/w*TAU*3)*6);
+  pxDisc(x,i,cy,r+2,'#14452a');
+ }
+ for(let i=0;i<w;i+=10){
+  const r=12+((R()*10)|0),cy=62+((R()*16)|0)+Math.round(sin(i/w*TAU*3)*6);
+  pxDisc(x,i,cy,r,'#1f7a3c');pxDisc(x,i-3,cy-4,Math.max(4,r-6),'#2f9a4c');pxDisc(x,i-5,cy-7,Math.max(2,r-12),'#56c26a');
+ }
+ for(let i=40;i<w;i+=96){
+  x.fillStyle='#4a2f14';x.fillRect(i,18,4,60);x.fillStyle='#6a4a22';x.fillRect(i,18,1,60);
+  for(let k=0;k<5;k++){const a=-PI*0.9+k*PI*0.45,ex=i+2+cos(a)*20,ey=20+sin(a)*10+6;x.fillStyle=k%2?'#1f7a3c':'#2f9a4c';x.beginPath();x.moveTo(i+2,20);x.quadraticCurveTo((i+2+ex)/2,8+sin(a)*6,ex,ey);x.quadraticCurveTo((i+2+ex)/2,18,i+2,24);x.fill()}
+ }
+ SC.jungle=c;return c;
+}
+function drawWaterfalls(camX,mb){
+ for(let i=0;i<5;i++){
+  const wx=Math.round((((i*270+130-camX*0.06)%1350)+1350)%1350-100),top=mb-64+((i*13)%20);
+  g.fillStyle='#e8f8ff';g.fillRect(wx,top,8,mb-top);
+  g.fillStyle='#9fd6f0';g.fillRect(wx+5,top,3,mb-top);
+  g.fillStyle='#ffffff';
+  for(let k=0;k<6;k++){const yy=top+((F*2+k*18+i*7)%(mb-top-4));g.fillRect(wx+1+(k%3)*2,yy,2,4)}
+  g.fillStyle='#ffffff';g.fillRect(wx-3,mb-3,14,3);
+ }
+}
 function drawBg(camX,camY,baseY){
  drawSky();
  pxDisc(g,floor(VW*0.8),floor(VH*0.16),14,'#fff6b8');pxDisc(g,floor(VW*0.8),floor(VH*0.16),11,'#ffe27a');
  const oy=(baseY-camY);
  const mb=floor(VH*0.66+oy*0.10);
  tileRow(mtnTile(),mb,0.06,camX);
+ drawWaterfalls(camX,mb);
  g.fillStyle='#86c0d8';g.fillRect(0,mb,VW,VH-mb);
  for(let i=0;i<8;i++){
   const w=SC['cl'+(i%3)]||cloudSpr(i%3);
   const x=(((i*170-camX*0.12+F*(0.1+(i%3)*0.05))%1360)+1360)%1360-140,y=14+((i*37)%72)+oy*0.05;
   g.drawImage(w,Math.round(x),Math.round(y));
  }
- const hb=floor(VH*0.86+oy*0.2);
- tileRow(hillTile(),hb,0.22,camX);
+ const jb=floor(VH*0.80+oy*0.16);
+ tileRow(jungleTile(),jb,0.14,camX);
+ g.fillStyle='#1b5a30';g.fillRect(0,jb,VW,VH-jb);
+ const hb=floor(VH*0.88+oy*0.22);
+ tileRow(hillTile(),hb,0.26,camX);
  g.fillStyle='#2f9a54';g.fillRect(0,hb,VW,VH-hb);
 }
 function drawEarth(x0,x1,H,yb){
@@ -984,7 +1016,7 @@ function spawn(){
  p.x=c.x;p.y=c.gy-19;
  G.time=c.time;G.fin=0;G.finT=0;
  for(const o of L.loops)o.layer=0;
- cam.x=clamp(p.x-VW/2,0,max(0,L.W-VW));cam.y=clamp(p.y-VH/2-16,0,L.H-VH);cam.look=0;cam.lead=0;
+ cam.x=clamp(p.x-VW/2,0,max(0,L.W-VW));cam.y=clamp(p.y-VH/2-10,0,L.H-VH);cam.look=0;cam.lead=0;
  PT.length=0;
  L.bosses.forEach(resetBoss);L.shots.length=0;G.fc.length=0;G.warnT=0;G.msgT=0;G.hintT=0;G.flash=0;
  if(state==='play')playMusic('stage');
@@ -1835,7 +1867,7 @@ function updateCam(p){
   const dx=p.x+cam.lead-(cam.x+VW/2);
   if(dx>16)cam.x+=min(dx-16,16);else if(dx<-16)cam.x+=max(dx+16,-16);
  }
- const ty=p.y+cam.look,dy=ty-(cam.y+VH/2-16);
+ const ty=p.y+cam.look,dy=ty-(cam.y+VH/2+10);
  if(p.onGround){
   const lim=abs(p.ysp)<6?6:16;
   cam.y+=clamp(dy,-lim,lim);

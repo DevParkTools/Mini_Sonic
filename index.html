@@ -43,7 +43,7 @@ let dc=g;
 cv.width=VW;cv.height=VH;
 g.imageSmoothingEnabled=false;
 
-let state='boot',F=0,stT=0,fadeA=0,fadeDir=0,fadeCb=null,tphase=0,msel=0,retState='title',menuMode='options',selT=0,selBounce=0,hitstop=0,shake=0,hudPop=0,curMusic=null;
+let state='title',F=0,stT=0,fadeA=0,fadeDir=0,fadeCb=null,tphase=0,msel=0,retState='title',menuMode='options',selT=0,selBounce=0,hitstop=0,shake=0,hudPop=0,curMusic=null;
 const menuRects=[];
 let panelRect=null;
 
@@ -1415,7 +1415,13 @@ function updateEnts(){
   }else hurtPlayer(p,e.x);
  }
  for(const m of L.monitors){
-  if(!m.alive||!att||!hit(p.x,p.y,pw,ph,m.x,m.y,10,10))continue;
+  if(!m.alive)continue;
+  if(!att){
+   const dxm=p.x-m.x;
+   if(abs(p.y-m.y)<12&&abs(dxm)<pw+6){p.x=m.x+(dxm<0?-1:1)*(pw+6);if(p.gsp*dxm<0)p.gsp=0;if(p.xsp*dxm<0)p.xsp=0}
+   continue;
+  }
+  if(!hit(p.x,p.y,pw+(abs(p.gsp)>6?6:0),ph,m.x,m.y,10,10))continue;
   m.alive=0;fxExplode(m.x,m.y);sfx('pop');bounce(p,m.y);G.score+=10;hitstop=4;shake=max(shake,3);
   pt(m.x,m.y-4,0,-0.8,50,'icon','',monSpr(m.type,0),0);
   if(m.type==='R'){for(let n=0;n<10;n++)G.fc.push({sx:m.x-cam.x,sy:m.y-cam.y,t:-n*4,i:n});addPop(m.x,m.y-14,'+10');sfx('ring')}
@@ -2019,12 +2025,12 @@ function drawGear(){
 }
 function fmtTime(f){const s=floor(f/60);return floor(s/60)+"'"+String(s%60).padStart(2,'0')+'"'+String(floor((f%60)*100/60)).padStart(2,'0')}
 function drawHUD(){
- const p=G.p,nx=164;
- text(tr('score'),8,6,'#ffd21f',2);text(G.score,nx,6,'#ffffff',2,'right');
- text(tr('time'),8,24,G.time>32400&&(F>>3&1)?'#ff5a5a':'#ffd21f',2);text(fmtTime(G.time),nx,24,'#ffffff',2,'right');
- text(tr('rings'),8,42,(p.rings===0&&(F>>3&1))?'#ff5a5a':p.rings>=50?'#ffe27a':'#ffd21f',2);
- text(p.rings,nx,42-(hudPop>4?2:0),hudPop>0?'#ffff80':p.sup?'#ffe27a':'#ffffff',2,'right');
- if(p.sup&&(F>>2&1))text(tr(p.hyper?'hyper':'super'),nx+8,42,'#ffe27a',2);
+ const p=G.p,lx=3,nx=lx+(S.lang==='ko'?52:68);
+ text(tr('score'),lx,4,'#ffd21f',2);text(G.score,nx,4,'#ffffff',2);
+ text(tr('time'),lx,22,G.time>32400&&(F>>3&1)?'#ff5a5a':'#ffd21f',2);text(fmtTime(G.time),nx,22,'#ffffff',2);
+ text(tr('rings'),lx,40,(p.rings===0&&(F>>3&1))?'#ff5a5a':p.rings>=50?'#ffe27a':'#ffd21f',2);
+ text(p.rings,nx,40-(hudPop>4?2:0),hudPop>0?'#ffff80':p.sup?'#ffe27a':'#ffffff',2);
+ if(p.sup&&(F>>2&1))text(tr(p.hyper?'hyper':'super'),nx+44,40,'#ffe27a',2);
  gemRow(Math.round(VW/2-48),VH-14);
  if(G.gemT>0)textO(tr('gem'),VW/2,Math.round(VH*0.4),(F>>2&1)?'#ffffff':'#7fd6ff','#102a6b',3,'center');
  g.drawImage(headSprite(p.ch),6,VH-30);
@@ -2462,6 +2468,7 @@ function frame(t){
 }
 layout();
 updateTouchUI();
+playMusic('title');
 if(window.HR3_TEST){window.HR3_TEST.api={G,L,S,update,draw,held,pressed,clearPressed,beginAct,build,solid,setState:s=>{state=s},getState:()=>state,cam,tap,setSize:(w,h)=>{VW=w;VH=h;cv.width=w;cv.height=h},menuRects,PT,setPhase:n=>{tphase=n},setStT:n=>{stT=n},setSel:n=>{S.char=n},goSuper,L,SS,ssBuild,enterSpecial}}
 else requestAnimationFrame(frame);
 })();
